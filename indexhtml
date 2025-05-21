@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Kelime Oyunu</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .keyboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .key-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .key {
+      padding: 14px 18px;
+      background-color: #666;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .key.special {
+      background-color: #007a36;
+    }
+
+    .key.delete {
+      background-color: #aa2e2e;
+    }
+
+    .tile {
+      border: 2px solid #ccc;
+      width: 60px;
+      height: 60px;
+      text-align: center;
+      font-size: 32px;
+      text-transform: uppercase;
+      border-radius: 10px;
+      background-color: white;
+      transition: background-color 0.3s, border-color 0.3s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: black;
+    }
+
+    .correct {
+      background-color: #6aaa64;
+      color: white;
+      border-color: #6aaa64;
+    }
+
+    .present {
+      background-color: #c9b458;
+      color: white;
+      border-color: #c9b458;
+    }
+
+    .absent {
+      background-color: #787c7e;
+      color: white;
+      border-color: #787c7e;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kelime Oyunu</h1>
+
+  <div id="game-board" class="d-flex flex-column align-items-center gap-2 mb-4">
+    <!-- 6 satır x 5 harf -->
+  </div>
+
+  <div class="keyboard">
+    <div class="key-row">
+      <button class="key">Q</button><button class="key">W</button><button class="key">E</button><button class="key">R</button><button class="key">T</button>
+      <button class="key">Y</button><button class="key">U</button><button class="key">I</button><button class="key">O</button><button class="key">P</button>
+    </div>
+    <div class="key-row">
+      <button class="key">A</button><button class="key">S</button><button class="key">D</button><button class="key">F</button><button class="key">G</button>
+      <button class="key">H</button><button class="key">J</button><button class="key">K</button><button class="key">L</button>
+    </div>
+    <div class="key-row">
+      <button class="key delete">Sil</button>
+      <button class="key">Z</button><button class="key">X</button><button class="key">C</button><button class="key">V</button>
+      <button class="key">B</button><button class="key">N</button><button class="key">M</button>
+      <button class="key special">Giriş</button>
+    </div>
+  </div>
+
+  <div id="message" class="text-danger mt-3 fw-semibold"></div>
+
+  <!-- JavaScript dosyası eklendi -->
+  <script src="keyboard.js"></script>
+</body>
+</html>
+const gizliKelime = "KAPAK";
+const tahminSayisi = 6;
+let aktifSatir = 0;
+let aktifHarf = 0;
+const tahminler = [];
+
+const board = document.getElementById("game-board");
+for (let i = 0; i < tahminSayisi; i++) {
+  const row = document.createElement("div");
+  row.className = "d-flex justify-content-center gap-2";
+  for (let j = 0; j < 5; j++) {
+    const tile = document.createElement("div");
+    tile.className = "tile";
+    row.appendChild(tile);
+  }
+  board.appendChild(row);
+}
+
+function harfYaz(harf) {
+  if (aktifHarf < 5 && aktifSatir < tahminSayisi) {
+    const kutular = board.children[aktifSatir].children;
+    kutular[aktifHarf].textContent = harf;
+    tahminler[aktifSatir] = tahminler[aktifSatir] || [];
+    tahminler[aktifSatir][aktifHarf] = harf;
+    aktifHarf++;
+  }
+}
+
+function sil() {
+  if (aktifHarf > 0) {
+    aktifHarf--;
+    const kutular = board.children[aktifSatir].children;
+    kutular[aktifHarf].textContent = "";
+    tahminler[aktifSatir][aktifHarf] = "";
+  }
+}
+
+function girisYap() {
+  if (aktifHarf < 5) {
+    mesajGoster("5 harf girmelisiniz.");
+    return;
+  }
+  const girilen = tahminler[aktifSatir].join("").toUpperCase();
+  const gizli = gizliKelime.toUpperCase();
+
+  const kutular = board.children[aktifSatir].children;
+
+  let harfSay = {};
+  for (let harf of gizli) {
+    harfSay[harf] = (harfSay[harf] || 0) + 1;
+  }
+
+  for (let i = 0; i < 5; i++) {
+    const harf = girilen[i];
+    if (harf === gizli[i]) {
+      kutular[i].classList.add("correct");
+      harfSay[harf]--;
+    }
+  }
+
+  for (let i = 0; i < 5; i++) {
+    const harf = girilen[i];
+    if (harf !== gizli[i]) {
+      if (gizli.includes(harf) && harfSay[harf] > 0) {
+        kutular[i].classList.add("present");
+        harfSay[harf]--;
+      } else {
+        kutular[i].classList.add("absent");
+      }
+    }
+  }
+
+  if (girilen === gizli) {
+    mesajGoster("Tebrikler! Doğru tahmin.", true);
+  } else if (aktifSatir === tahminSayisi - 1) {
+    mesajGoster("Tahmin hakkınız bitti! Kelime: " + gizli);
+  } else {
+    aktifSatir++;
+    aktifHarf = 0;
+  }
+}
+
+function mesajGoster(msg, kalici = false) {
+  const mesaj = document.getElementById("message");
+  mesaj.textContent = msg;
+  mesaj.style.display = "block";
+  if (!kalici) {
+    setTimeout(() => (mesaj.style.display = "none"), 2000);
+  }
+}
+
+document.querySelectorAll(".key").forEach(tus => {
+  tus.addEventListener("click", () => {
+    const harf = tus.textContent;
+    if (harf === "Sil") sil();
+    else if (harf === "Giriş") girisYap();
+    else harfYaz(harf);
+  });
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Backspace") {
+    sil();
+  } else if (e.key === "Enter") {
+    girisYap();
+  } else if (/^[A-ZĞÜŞİÖÇ]$/i.test(e.key)) {
+    harfYaz(e.key.toUpperCase());
+  }
+});
